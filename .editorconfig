@@ -1,0 +1,18 @@
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.ts]
+# For best compatibility, handle quotes with ESLint/Prettier instead of EditorConfig.
+
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+[*.cs]
+indent_size = 4

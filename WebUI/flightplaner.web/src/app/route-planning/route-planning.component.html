@@ -1,0 +1,166 @@
+<!-- Navigation Bar -->
+<nav class="relative z-50 flex items-center justify-between px-2 py-3 bg-red-500 mb-3">
+  <div class="container px-4 mx-auto flex flex-wrap items-center justify-between">
+    <div class="w-full relative flex justify-between lg:w-auto px-4 lg:static lg:block lg:justify-start">
+      <div class="navbar-logo">
+        <h1 class="py-10 font-extrabold text-5xl text-white">
+          <span class="flex">
+            <img src="../../assets/angular-logo.png" alt="Logo" class="h-10 mr-2" />
+            FlightPlaner
+          </span>
+        </h1>
+      </div>
+    </div>
+    <div class="lg:flex lg:flex-grow items-center">
+      <ul class="flex flex-col lg:flex-row list-none ml-auto">
+        <li class="nav-item">
+          <a class="px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75" routerLink="">
+            <i class="fab fa-facebook-square text-lg leading-lg text-white opacity-75"></i><span class="ml-2">Home</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="px-3 py-2 flex items-center text-xs uppercase font-bold leading-snug text-white hover:opacity-75" routerLink="/animation">
+            <i class="fab fa-twitter text-lg leading-lg text-white opacity-75"></i><span class="ml-2">Animate Route</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Main Content Section (flex layout with sidebar and targets) -->
+<div class="flex h-screen hero bg-cover bg-center" style="background-image: url('path_to_your_image.jpg');">
+  
+  <!-- FlightPlaner Sidebar (Form) -->
+  <div class="w-1/3 p-6 border-r border-gray-700 overflow-auto flex flex-col bg-transparent">
+    <h1 class="py-10 text-white text-5xl">
+      FlightPlaner
+    </h1>
+
+    <form (ngSubmit)="onFormSubmit()" [formGroup]="coordinatesForm">
+      <div class="mt-2">
+        <label for="street" class="text-white me-4">Street:</label>
+        <input type="text" class="w-full p-2 border-2 rounded-sm" formControlName="street">
+      </div>
+      <div class="mt-2">
+        <label for="city" class="text-white me-4">City:</label>
+        <input type="text" class="w-full p-2 border-2 rounded-sm" formControlName="city">
+      </div>
+      <div class="mt-2">
+        <label for="postalCode" class="text-white me-4">PostalCode:</label>
+        <input type="text" class="w-full p-2 border-2 rounded-sm" formControlName="postalCode">
+      </div>
+      <div class="mt-2">
+        <label for="country" class="text-white me-4">Country:</label>
+        <input type="text" class="w-full p-2 border-2 rounded-sm" formControlName="country">
+      </div>
+      <div class="mt-2">
+        <label for="isStart" class="flex items-center text-white">
+          <input type="checkbox" formControlName="isStart" class="h-4 w-4">
+          <span>IsStart</span>
+        </label>
+      </div>
+      <div class="mt-2">
+        <button type="submit" class="bg-slate-800 text-white px-4 py-2 rounded-sm w-full">Add</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Targets Section -->
+  <div class="w-1/3 p-6 overflow-auto flex flex-col bg-transparent">
+    <label class="flex py-10 text-white text-5xl">Targets</label>
+    <div *ngIf="coordinates$ | async as coordinates">
+      <div *ngIf="coordinates.length > 0">
+        <ul>
+          <li *ngFor="let item of coordinates; let i = index" class="bg-teal-900 p-4 rounded-lg shadow-md opacity-80 border-2 border-teal-500">
+            <!-- Address of the target -->
+            <div class="text-white font-light text-xl">{{ GetDisplayName(item) }}</div>
+
+            <!-- Latitude and Longitude -->
+            <div class="text-white text-sm mt-2">
+              <label>Lat:</label>
+              <span class="mx-2">{{ item.lat }}</span>
+              <label>Lon:</label>
+              <span class="mx-2">{{ item.lon }}</span>
+            </div>
+
+            <!-- Distance to Predecessor (if applicable) -->
+            <div *ngIf="GetPredecessor(i) as predecessor" class="text-white text-sm mt-2">
+              <span>Distance to Predecessor: {{ GetDistanceBetween(item, predecessor) }} km</span>
+            </div>
+
+            <!-- Edit, Delete, and Mark as Start buttons -->
+            <div class="flex gap-2 mt-3">
+              <!-- Edit Button -->
+              <button (click)="onEdit(item)" class="text-blue-500">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mx-2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                </svg>
+              </button>
+
+              <!-- Delete Button -->
+              <button (click)="onDelete(item.guid)" class="text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mx-2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 1 12 10" />
+                </svg>
+              </button>
+
+              <!-- Mark as Start Button -->
+              <span *ngIf="item.isStart" class="text-green-500">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 mx-2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                </svg>
+              </span>
+            </div>
+          </li>
+        </ul>
+
+        <!-- Optimization Menu (appears only if coordinates exist) -->
+        <div *ngIf="isFullRoute" class="mt-4">
+          <div class="text-white text-lg mb-2">Select an optimization algorithm:</div>
+          <div class="grid grid-cols-4 gap-2">
+            <button class="bg-blue-500 text-white text-xs px-2 py-1 rounded" (click)="applyOptimization('Optimize')">Optimize</button>
+            <button class="bg-green-500 text-white text-xs px-2 py-1 rounded" (click)="applyOptimization('Nearest')">Nearest</button>
+            <button class="bg-yellow-500 text-white text-xs px-2 py-1 rounded" (click)="applyOptimization('Farthest')">Farthest</button>
+            <button class="bg-purple-500 text-white text-xs px-2 py-1 rounded" (click)="applyOptimization('NearestFarthest')">Near→Far</button>
+            <button class="bg-teal-500 text-white text-xs px-2 py-1 rounded" (click)="applyOptimization('FarthestNearest')">Far→Near</button>
+            <button class="bg-red-500 text-white text-xs px-2 py-1 rounded" (click)="applyOptimization('Random')">Random</button>
+            <button class="bg-orange-500 text-white text-xs px-2 py-1 rounded" (click)="applyOptimization('greedyAlgorithm')">Greedy</button>
+            <button class="bg-pink-500 text-white text-xs px-2 py-1 rounded" (click)="applyOptimization('geneticAlgorithm')">Genetic</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+ <!-- Optimized Route Section (Last 33% of the Layout) -->
+  <div class="w-1/3 p-6 overflow-auto flex flex-col bg-transparent">
+    <label class="flex py-10 text-white text-5xl">Optimized Route</label>
+    <div *ngIf="optimizedCoordinates$ | async as optimizedCoordinates">
+      <div *ngIf="optimizedCoordinates.length > 0">
+        <ul>
+          <li *ngFor="let item of optimizedCoordinates; let i = index" class="bg-teal-900 p-4 rounded-lg shadow-md opacity-80 border-2 border-teal-500">
+            <!-- Address of the target -->
+            <div class="text-white font-light text-xl">{{ GetDisplayName(item) }}</div>
+
+            <!-- Latitude and Longitude -->
+            <div class="text-white text-sm mt-2">
+              <label>Lat:</label>
+              <span class="mx-2">{{ item.lat }}</span>
+              <label>Lon:</label>
+              <span class="mx-2">{{ item.lon }}</span>
+            </div>
+
+            <!-- Distance to Predecessor (if applicable) -->
+            <div *ngIf="GetPredecessor(i) as predecessor" class="text-white text-sm mt-2">
+              <span>Distance to Predecessor: {{ GetDistanceBetween(item, predecessor) }} km</span>
+            </div>
+            
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+</div>
