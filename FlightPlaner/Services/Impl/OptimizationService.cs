@@ -13,61 +13,11 @@ public class OptimizationService(IRandomProvider randomProvider) : IOptimization
             Algorithm.Optimize => FindOptimized.Execute(start, targets),
             Algorithm.Nearest => FindNearest.Execute(start, targets),
             Algorithm.Farthest => FindFarest.Execute(start, targets),
-            Algorithm.NearestFarthest => FindNearestThenFarest(start, targets),
+            Algorithm.NearestFarthest => FindNearestThenFarest.Execute(start, targets),
             Algorithm.FarthestNearest => FindFarestThenNearest(start, targets),
             Algorithm.Random => new FindRandom(randomProvider).Execute(start, targets),
             _ => throw new NotImplementedException(),
         };
-    }
-
-    internal static List<GPSDb> FindNearestThenFarest(GPSDb start, List<GPSDb> targets)
-    {
-        List<GPSDb> computedGPSCoordinates = [];
-        List<GPSDb> copyOfTargets = new(targets);
-        GPSDb copyOfStart = start;
-
-        if (copyOfTargets.Count == 1)
-        {
-            computedGPSCoordinates.Add(start);
-            computedGPSCoordinates.AddRange(copyOfTargets);
-        }
-        else
-        {
-            computedGPSCoordinates.Add(start);
-
-            List<double> distanceList = [];
-
-            while (copyOfTargets.Count > 1)
-            {
-
-                copyOfTargets
-                        .ForEach(gps => distanceList.Add(GPSHelper.DistanceBetween(copyOfStart, gps)));
-
-                DistanceAndIndex point = GPSHelper.GetMinAndIndex(distanceList);
-
-                int index = point.Index;
-                computedGPSCoordinates.Add(copyOfTargets[index]);
-                start = copyOfTargets[index];
-                copyOfTargets.RemoveAt(index);
-                distanceList.Clear();
-
-                copyOfTargets
-                        .ForEach(gps => distanceList.Add(GPSHelper.DistanceBetween(copyOfStart, gps)));
-
-                point = GPSHelper.GetMaxAndIndex(distanceList);
-
-                index = point.Index;
-                computedGPSCoordinates.Add(copyOfTargets[index]);
-                start = copyOfTargets[index];
-                copyOfTargets.RemoveAt(index);
-                distanceList.Clear();
-
-            }
-
-            copyOfTargets.ForEach(computedGPSCoordinates.Add);
-        }
-
-        return computedGPSCoordinates;
     }
 
     internal static List<GPSDb> FindFarestThenNearest(GPSDb start, List<GPSDb> targets)
@@ -118,37 +68,7 @@ public class OptimizationService(IRandomProvider randomProvider) : IOptimization
         }
 
         return computedGPSCoordinates;
-    }
-
-    internal static List<GPSDb> FindOptimized1(GPSDb start, List<GPSDb> targets)
-    {
-        List<GPSDb> computedGPSCoordinates = [];
-        List<GPSDb> copyOfTargets = new(targets);
-
-        if (targets.Count == 1)
-        {
-            computedGPSCoordinates.Add(start);
-            computedGPSCoordinates.AddRange(copyOfTargets);
-        }
-        else
-        {
-            List<List<GPSDb>> input = GPSHelper.GetPermutations(copyOfTargets);
-            List<double> distances = [];
-
-            input.ForEach(list =>
-            {
-                list.Insert(0, start);
-                distances.Add(GPSHelper.GetTotalDistance(list));
-            });
-
-            DistanceAndIndex point = GPSHelper.GetMinAndIndex(distances);
-            computedGPSCoordinates = new List<GPSDb>(input[point.Index]);
-        }
-
-        return computedGPSCoordinates;
-    }
-
-    
+    }   
 
     public List<GPSDb> OptimizeWithSimulatedAnnealing(GPSDb start, List<GPSDb> targets)
     {
