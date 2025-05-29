@@ -1,4 +1,4 @@
-﻿using FlightPlaner.Models.Domain;
+using FlightPlaner.Models.Domain;
 using FlightPlaner.Services.Contract;
 using FlightPlaner.Services.Impl.Algorithms;
 
@@ -11,47 +11,13 @@ public class OptimizationService(IRandomProvider randomProvider) : IOptimization
         return algorithm switch
         {
             Algorithm.Optimize => FindOptimized.Execute(start, targets),
-            Algorithm.Nearest => FindNearest(start, targets),
+            Algorithm.Nearest => FindNearest.Execute(start, targets),
             Algorithm.Farthest => FindFarest.Execute(start, targets),
             Algorithm.NearestFarthest => FindNearestThenFarest(start, targets),
             Algorithm.FarthestNearest => FindFarestThenNearest(start, targets),
             Algorithm.Random => new FindRandom(randomProvider).Execute(start, targets),
             _ => throw new NotImplementedException(),
         };
-    }
-
-    internal static List<GPSDb> FindNearest(GPSDb start, List<GPSDb> targets)
-    {
-        List<GPSDb> computedGPSCoordinates = [];
-        List<GPSDb> copyOfTargets = new(targets);
-        GPSDb copyOfStart = start;
-
-        if (copyOfTargets.Count == 1)
-        {
-            computedGPSCoordinates.Add(start);
-            computedGPSCoordinates.AddRange(copyOfTargets);
-        }
-        else
-        {
-            List<double> distanceList = [];
-            computedGPSCoordinates.Add(start);
-            while (copyOfTargets.Count > 1)
-            {
-                copyOfTargets.ForEach(gps => distanceList.Add(GPSHelper
-                        .DistanceBetween(copyOfStart, gps)));
-
-                DistanceAndIndex distanceAndIndex = GPSHelper.GetMinAndIndex(distanceList);
-                int index = distanceAndIndex.Index;
-                computedGPSCoordinates.Add(copyOfTargets[index]);
-                start = copyOfTargets[index];
-                copyOfTargets.RemoveAt(index);
-                distanceList.Clear();
-            }
-            // to add the remaining
-            copyOfTargets.ForEach(computedGPSCoordinates.Add);
-        }
-
-        return computedGPSCoordinates;
     }
 
     internal static List<GPSDb> FindNearestThenFarest(GPSDb start, List<GPSDb> targets)

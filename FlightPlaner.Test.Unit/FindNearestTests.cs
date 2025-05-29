@@ -7,12 +7,12 @@ namespace FlightPlaner.Test.Unit;
 using static FlightPlaner.Test.sdk.GpsTestHelper;
 
 [TestFixture]
-public class FindFarestTests
+public class FindNearestTests
 {
     [Test]
     public void Execute_SingleTarget_ReturnsStartAndTarget()
     {
-        var result = FindFarest.Execute(Berlin, [Bogota]);
+        var result = FindNearest.Execute(Berlin, [Bogota]);
 
         Assert.Multiple(() =>
         {
@@ -25,7 +25,7 @@ public class FindFarestTests
     [Test]
     public void Execute_EmptyTargets_ReturnsStart()
     {
-        var result = FindFarest.Execute(Berlin, []);
+        var result = FindNearest.Execute(Berlin, []);
 
         Assert.Multiple(() =>
         {
@@ -37,26 +37,27 @@ public class FindFarestTests
     [TestCaseSource(nameof(GetRoutes))]
     public void Execute_WithMultipleTargets_ReturnsInCorrectOrder(GPSDb start, List<GPSDb> targets)
     {
-        var result = FindFarest.Execute(start, targets);
+        var result = FindNearest.Execute(start, targets);
 
         Assert.Multiple(() =>
         {
             Assert.That(result[0], Is.EqualTo(start));
             Assert.That(result, Has.Count.EqualTo(targets.Count + 1));
 
-
-        for (int i = 1; i < result.Count - 1; i++)
-        {
-            double prevDistance = GPSHelper.DistanceBetween(result[i - 1], result[i]);
-
-            for (int j = i + 1; j < result.Count; j++)
+            for (int i = 1; i < result.Count - 1; i++)
             {
-                double compareDistance = GPSHelper.DistanceBetween(result[i - 1], result[j]);
-                Assert.That(prevDistance, Is.GreaterThanOrEqualTo(compareDistance), $"Element at index {i} is not the farthest from previous.");
+                double prevDistance = GPSHelper.DistanceBetween(result[i - 1], result[i]);
+
+                for (int j = i + 1; j < result.Count; j++)
+                {
+                    double compareDistance = GPSHelper.DistanceBetween(result[i - 1], result[j]);
+                    Assert.That(prevDistance, Is.LessThanOrEqualTo(compareDistance),
+                        $"Element at index {i} is not the nearest from previous.");
+                }
             }
-        }
         });
     }
+
     private static IEnumerable<TestCaseData> GetRoutes()
     {
         yield return new TestCaseData(

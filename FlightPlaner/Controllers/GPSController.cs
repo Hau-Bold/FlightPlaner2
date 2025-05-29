@@ -1,4 +1,4 @@
-﻿using FlightPlaner.Data;
+using FlightPlaner.Data;
 using FlightPlaner.Models;
 using FlightPlaner.Models.Domain;
 using FlightPlaner.Services.Contract;
@@ -96,7 +96,6 @@ namespace FlightPlaner.Controllers
         public async Task<IActionResult> Add(GPSRequestDTO dto)
         {
             var result = await openStreetMapService.GetCoordinates(dto);
-
 
             // Normalize input for comparison
             var normStreet = (dto.Street ?? string.Empty).Trim().ToLower();
