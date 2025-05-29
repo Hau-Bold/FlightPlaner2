@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace FlightPlaner.Models.Domain
 {
@@ -12,6 +12,6 @@ namespace FlightPlaner.Models.Domain
 
         public bool IsStart { get; set; }
 
-        public string City { get; set; }
+        required public string City { get; set; }
     }
 }

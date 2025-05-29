@@ -5,7 +5,6 @@ using FlightPlaner.Services.Contract;
 using FlightPlaner.Services.Impl;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace FlightPlaner.Controllers
 {
