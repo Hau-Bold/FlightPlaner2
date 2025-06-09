@@ -105,12 +105,13 @@ namespace FlightPlaner.Controllers
 
             // Check for duplicate entry
             var duplicateExists = await DbContext.Coordinates.AnyAsync(g =>
-                g.Street.Trim().ToLower() == normStreet &&
-                g.City.Trim().ToLower() == normCity &&
-                g.PostalCode.Trim().ToLower() == normPostal &&
-                g.Country.Trim().ToLower() == normCountry &&
-                g.IsStart == isStart
-            );
+                                 (g.Street ?? string.Empty).Trim().Equals(normStreet, StringComparison.CurrentCultureIgnoreCase) &&
+                                 (g.City ?? string.Empty).Trim().Equals(normCity, StringComparison.CurrentCultureIgnoreCase) &&
+                                 (g.PostalCode ?? string.Empty).Trim().Equals(normPostal, StringComparison.CurrentCultureIgnoreCase) &&
+                                 ((g.Country ?? string.Empty).Trim().ToLower() == normCountry) &&
+                                 g.IsStart == isStart
+  );
+
 
             if (duplicateExists)
             {

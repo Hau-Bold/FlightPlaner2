@@ -2,7 +2,7 @@ using FlightPlaner.Models.Domain;
 
 namespace FlightPlaner.Services.Impl.Algorithms;
 
-internal class FindNearestThenFarest
+internal class FindFarestThenNearest
 {
     internal static List<GPSDb> Execute(GPSDb start, List<GPSDb> targets)
     {
@@ -24,20 +24,20 @@ internal class FindNearestThenFarest
 
         while (remaining.Count > 1)
         {
-            int nearestIndex = GPSHelper.GetNearestIndex(current, remaining);
-            current = remaining[nearestIndex];
+            int farthestIndex  = GPSHelper.GetFarthestIndex(current, remaining);
+            current = remaining[farthestIndex];
             result.Add(current);
-            remaining.RemoveAt(nearestIndex);
+            remaining.RemoveAt(farthestIndex);
 
             if (remaining.Count == 0)
             {
                 break;
             }
 
-            int farthestIndex = GPSHelper.GetFarthestIndex(current, remaining);
-            current = remaining[farthestIndex];
+            int nearestIndex = GPSHelper.GetNearestIndex(current, remaining);
+            current = remaining[nearestIndex];
             result.Add(current);
-            remaining.RemoveAt(farthestIndex);
+            remaining.RemoveAt(nearestIndex);
         }
 
         if (remaining.Count == 1)

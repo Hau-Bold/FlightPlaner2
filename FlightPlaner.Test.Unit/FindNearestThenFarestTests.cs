@@ -1,6 +1,7 @@
 using FlightPlaner.Models.Domain;
-using FlightPlaner.Services.Impl;
 using FlightPlaner.Services.Impl.Algorithms;
+using NUnit.Framework;
+using System.Collections.Generic;
 
 namespace FlightPlaner.Test.Unit;
 
@@ -12,7 +13,7 @@ public class FindNearestThenFarestTests
     [Test]
     public void Execute_SingleTarget_ReturnsStartAndTarget()
     {
-        var result = FindFarest.Execute(Berlin, [Bogota]);
+        var result = FindNearestThenFarest.Execute(Berlin, [Bogota]);
 
         Assert.Multiple(() =>
         {
@@ -25,7 +26,7 @@ public class FindNearestThenFarestTests
     [Test]
     public void Execute_EmptyTargets_ReturnsStart()
     {
-        var result = FindFarest.Execute(Berlin, []);
+        var result = FindNearestThenFarest.Execute(Berlin, []);
 
         Assert.Multiple(() =>
         {
@@ -35,49 +36,35 @@ public class FindNearestThenFarestTests
     }
 
     [TestCaseSource(nameof(GetRoutes))]
-    public void Execute_AlternatesBetweenNearestAndFarthestDistances(GPSDb start, List<GPSDb> targets)
+    public void Execute_WithMultipleTargets_YieldsExpectedRoute(GPSDb start, List<GPSDb> targets, List<GPSDb> expected, string description)
     {
+        Assert.That(expected, Has.Count.EqualTo(targets.Count + 1));
+
+        // Act
         var result = FindNearestThenFarest.Execute(start, targets);
-        var distances = new List<double>();
 
-        for (int i = 1; i < result.Count; i++)
-        {
-            distances.Add(GPSHelper.DistanceBetween(result[i - 1], result[i]));
-        }
-
-        for (int i = 0; i < distances.Count - 1; i++)
-        {
-            double current = distances[i];
-            double next = distances[i + 1];
-
-            if (i % 2 == 0) // Even index: nearest
-            {
-                Assert.That(current, Is.LessThanOrEqualTo(next),
-                    $"Step {i}: expected NEAREST (distance {current}) to be <= next step (distance {next})");
-            }
-            else // Odd index: farthest
-            {
-                Assert.That(current, Is.GreaterThanOrEqualTo(next),
-                    $"Step {i}: expected FARTHEST (distance {current}) to be >= next step (distance {next})");
-            }
-        }
+        // Assert
+        CollectionAssert.AreEqual(expected, result, $"Route computation failed for: {description}");
     }
 
     private static IEnumerable<TestCaseData> GetRoutes()
     {
         yield return new TestCaseData(
-            Berlin,
-            new List<GPSDb> { Ankara, London, Canberra, NewDelhi,Moscow,Bogota }
-        ).SetName("FromBerlin_ToEuropeAsiaAustralia");
+           Berlin,
+           new List<GPSDb> { Bogota, Ankara, London },
+           new List<GPSDb> { Berlin, London, Bogota, Ankara },
+       "Berlin_To_Bogota_Ankara_London");
 
         yield return new TestCaseData(
-            Bogota,
-            new List<GPSDb> { Washington, Moscow, Tokyo }
-        ).SetName("FromBogota_ToUSA_Russia_Japan");
+            Tokyo,
+            new List<GPSDb> { Canberra, NewDelhi, Moscow, Paris },
+            new List<GPSDb> { Tokyo, NewDelhi, Canberra, Moscow, Paris },
+        "Tokyo_To_Canberra_NewDelhi_Moscow_Paris");
 
         yield return new TestCaseData(
-            Paris,
-            new List<GPSDb> { London, NewDelhi }
-        ).SetName("FromParis_ToLondonAndDelhi");
+            Washington,
+            new List<GPSDb> { Berlin, London, Paris, Bogota },
+            new List<GPSDb> { Washington, Bogota, Berlin, Paris, London },
+        "Washington_To_Berlin_London_Paris_Bogota");
     }
 }

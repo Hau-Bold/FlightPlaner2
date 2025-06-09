@@ -1,8 +1,12 @@
-﻿using FlightPlaner.Models.Domain;
+using FlightPlaner.Models.Domain;
 using FlightPlaner.Test.sdk;
 using FlightPlaner.Services.Contract;
 using FlightPlaner.Services.Impl.Algorithms;
 using Moq;
+
+using NUnit.Framework;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FlightPlaner.Test.Unit;
 

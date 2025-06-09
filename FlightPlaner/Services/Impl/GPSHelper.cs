@@ -34,38 +34,6 @@ namespace FlightPlaner.Services.Impl
             return response;
         }
 
-        internal static DistanceAndIndex GetMaxAndIndex(List<double> distances)
-        {
-
-            DistanceAndIndex distanceAndCorrespondingIndex = new(0, distances[0]);
-
-            for (int i = 1; i < distances.Count; i++)
-            {
-                if (distances[i] >= distanceAndCorrespondingIndex.Distance)
-                {
-                    distanceAndCorrespondingIndex.Index =i;
-                    distanceAndCorrespondingIndex.Distance =distances[i];
-                }
-            }
-            return distanceAndCorrespondingIndex;
-        }
-
-        internal static DistanceAndIndex GetMinAndIndex(List<double> distances)
-        {
-
-            DistanceAndIndex distanceAndCorrespondingIndex = new(0, distances[0]);
-
-            for (int i = 1; i < distances.Count; i++)
-            {
-                if (distances[i] <= distanceAndCorrespondingIndex.Distance)
-                {
-                    distanceAndCorrespondingIndex.Index=i;
-                    distanceAndCorrespondingIndex.Distance=distances[i];
-                }
-            }
-            return distanceAndCorrespondingIndex;
-        }
-
         internal static List<List<GPSDb>> GetPermutations(List<GPSDb> targets)
         {
             List<List<GPSDb>> permutations = [];
@@ -98,6 +66,41 @@ namespace FlightPlaner.Services.Impl
             return permutations;
         }
 
+        internal static int GetNearestIndex(GPSDb from, List<GPSDb> targets)
+        {
+            int index = 0;
+            double minDistance = double.MaxValue;
+
+            for (int i = 0; i < targets.Count; i++)
+            {
+                double distance = GPSHelper.DistanceBetween(from, targets[i]);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    index = i;
+                }
+            }
+
+            return index;
+        }
+
+        internal static int GetFarthestIndex(GPSDb from, List<GPSDb> targets)
+        {
+            int index = 0;
+            double maxDistance = double.MinValue;
+
+            for (int i = 0; i < targets.Count; i++)
+            {
+                double distance = GPSHelper.DistanceBetween(from, targets[i]);
+                if (distance > maxDistance)
+                {
+                    maxDistance = distance;
+                    index = i;
+                }
+            }
+
+            return index;
+        }
         internal static Point ToMiller(GPSDb gps, int actualWidth, int actualHeight)
         {
             double lon = ToDouble(gps.Lon);
