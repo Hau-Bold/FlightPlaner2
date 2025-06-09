@@ -109,9 +109,7 @@ namespace FlightPlaner.Controllers
                                  (g.City ?? string.Empty).Trim().Equals(normCity, StringComparison.CurrentCultureIgnoreCase) &&
                                  (g.PostalCode ?? string.Empty).Trim().Equals(normPostal, StringComparison.CurrentCultureIgnoreCase) &&
                                  ((g.Country ?? string.Empty).Trim().ToLower() == normCountry) &&
-                                 g.IsStart == isStart
-  );
-
+                                 g.IsStart == isStart);
 
             if (duplicateExists)
             {
@@ -124,9 +122,9 @@ namespace FlightPlaner.Controllers
                 Lat = result.Lat,
                 Lon = result.Lon,
                 Street = dto.Street ?? string.Empty,
-                City = dto.City,
+                City = dto.City ?? string.Empty,
                 PostalCode = dto.PostalCode ?? string.Empty,
-                Country = dto.Country,
+                Country = dto.Country ?? string.Empty,
                 IsStart = dto.IsStart,
             };
 

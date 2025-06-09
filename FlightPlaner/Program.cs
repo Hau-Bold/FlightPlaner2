@@ -12,8 +12,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//builder.Services.AddTransient<IOpenStreetMapService, OpenStreetMapService>();
-
 builder.Services.AddHttpClient<IOpenStreetMapService,OpenStreetMapService>();
 builder.Services.AddTransient<IOptimizationService, OptimizationService>();
 builder.Services.AddTransient<IRandomProvider, RandomProvider>();
