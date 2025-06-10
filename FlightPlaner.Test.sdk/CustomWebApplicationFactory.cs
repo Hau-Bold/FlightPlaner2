@@ -6,14 +6,13 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Moq;
 
 namespace FlightPlaner.Test.sdk;
 
 internal class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private IOptimizationService optimizationService;
-    private IOpenStreetMapService openStreetMapService;
+    private readonly IOptimizationService optimizationService;
+    private readonly IOpenStreetMapService openStreetMapService;
 
     public CustomWebApplicationFactory(IOptimizationService optimizationService,
                                        IOpenStreetMapService openStreetMapService)
@@ -37,7 +36,7 @@ internal class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
-        this.ConfigureAppSettings(builder);
+        ConfigureAppSettings(builder);
         ClearDatabase(builder);
 
 
@@ -73,8 +72,7 @@ internal class CustomWebApplicationFactory : WebApplicationFactory<Program>
         });
     }
 
-
-    private void ConfigureAppSettings(IHostBuilder builder)
+    private static void ConfigureAppSettings(IHostBuilder builder)
     {
         builder.ConfigureAppConfiguration(config =>
         {
@@ -85,7 +83,7 @@ internal class CustomWebApplicationFactory : WebApplicationFactory<Program>
         });
     }
 
-    internal void Dispose()
+    internal new void Dispose()
     {
         base.Dispose();
     }
