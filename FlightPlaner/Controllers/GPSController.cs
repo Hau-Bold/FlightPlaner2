@@ -91,7 +91,7 @@ namespace FlightPlaner.Controllers
             return Ok(millerCoordinates);
         }
 
-        [HttpPost]
+        [HttpPost("")]
         public async Task<IActionResult> Add(GPSRequestDTO dto)
         {
             var result = await openStreetMapService.GetCoordinates(dto);
