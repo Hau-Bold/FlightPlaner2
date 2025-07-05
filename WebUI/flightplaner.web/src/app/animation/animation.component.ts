@@ -1,14 +1,20 @@
-import { AfterViewInit, Component, ElementRef, ViewChild, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { AfterViewInit, Component, ElementRef, inject, ViewChild } from '@angular/core';
+import { TargetAnimationState } from '../../Modules/targetAnimationState.model';
 import { Point } from '../../Modules/point.model';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { GPS } from '../../Modules/gps.model';
-import { TargetAnimationState } from '../../Modules/targetAnimationState.model';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+import { RouterModule } from '@angular/router';
 
 @Component({
+  standalone: true,
   selector: 'app-animation',
   templateUrl: './animation.component.html',
-  styleUrls: ['./animation.component.css']
+  styleUrls: ['./animation.component.css'],
+  imports: [CommonModule,ReactiveFormsModule,RouterModule,HttpClientModule],
 })
 export class AnimationComponent implements AfterViewInit {
 

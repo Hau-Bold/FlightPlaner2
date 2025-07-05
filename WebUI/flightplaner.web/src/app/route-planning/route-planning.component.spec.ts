@@ -8,7 +8,7 @@ describe('RoutePlanningComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [RoutePlanningComponent]
+      imports: [RoutePlanningComponent]
     })
     .compileComponents();
 

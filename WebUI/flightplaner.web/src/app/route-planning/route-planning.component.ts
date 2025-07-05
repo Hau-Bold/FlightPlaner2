@@ -1,15 +1,19 @@
-import { Component,inject } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http'; //since the old way is deprecated
 import { HttpClient } from '@angular/common/http';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Component, inject } from '@angular/core';
+import { FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { GPS } from '../../Modules/gps.model';
-import { BehaviorSubject, firstValueFrom, Observable,tap } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
+
 
 @Component({
+  standalone: true,
   selector: 'app-route-planning',
   templateUrl: './route-planning.component.html',
-  styleUrl: './route-planning.component.css'
+  styleUrls: ['./route-planning.component.css'],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule,HttpClientModule],
 })
 export class RoutePlanningComponent {
 
