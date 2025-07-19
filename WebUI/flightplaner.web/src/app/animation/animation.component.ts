@@ -20,6 +20,9 @@ export class AnimationComponent implements AfterViewInit {
 
   private targetStates: { point: Point; state: TargetAnimationState }[] = [];
   private millerCoordinates: Point[]=[];
+  private backgroundImageUrl = '../../assets/M1.jpg';
+  private backgroundImageUrl2 = '../../assets/M2.jpg';
+  private toggleBackground:boolean=true;
 
   http = inject(HttpClient);
 
@@ -68,7 +71,7 @@ export class AnimationComponent implements AfterViewInit {
     this.offscreenCanvas.height = canvas.height;
 
     const background = new Image();
-    background.src = "../../assets/Mercator-projection.jpg";
+    background.src = this.toggleBackground? this.backgroundImageUrl: this.backgroundImageUrl2;
     background.onload = () => {
       if (this.offscreenContext) {
         // Draw the background onto the offscreen canvas
@@ -161,7 +164,7 @@ export class AnimationComponent implements AfterViewInit {
         context.stroke();
 
         context.font = '12px Arial';
-        context.fillStyle = 'black';
+        context.fillStyle =  this.toggleBackground ?'white' :'black';
         context.textAlign = 'center';
         context.fillText(point.city, point.xPx, point.yPx - state.radius - 5);
 
@@ -203,6 +206,11 @@ public stopAnimation(): void {
   });
 }
 
+public toggleCard() : void {
+this.toggleBackground = !this.toggleBackground;
+this.processImage();
+}
+
 
   private drawNeedles(points: Point[]): void {
     const canvas = this.myCanvas.nativeElement;
@@ -210,7 +218,8 @@ public stopAnimation(): void {
     if (!context) return;
 
     points.forEach(point => {
-      // Draw a small "needle" (e.g., a triangle or a red dot)
+
+      //needle
       context.beginPath();
       context.moveTo(point.xPx, point.yPx);
       context.lineTo(point.xPx - 4, point.yPx + 10);
@@ -219,9 +228,9 @@ public stopAnimation(): void {
       context.fillStyle = 'red';
       context.fill();
 
-      // Draw the city name above the needle
+      //  city name 
       context.font = '12px Arial';
-      context.fillStyle = 'black';
+      context.fillStyle =  this.toggleBackground ?'white' :'black';
       context.textAlign = 'center';
       context.fillText(point.city, point.xPx, point.yPx - 8);
     });

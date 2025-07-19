@@ -30,7 +30,7 @@
 </nav>
 
 <!-- Main Content Section (flex layout with sidebar and targets) -->
-<div class="flex h-screen hero bg-cover bg-center" style="background-image: url('path_to_your_image.jpg');">
+<div class="flex h-screen hero bg-cover bg-center">
   
   <!-- FlightPlaner Sidebar (Form) -->
   <div class="w-1/3 p-6 border-r border-gray-700 overflow-auto flex flex-col bg-transparent">
@@ -41,19 +41,19 @@
     <form (ngSubmit)="onFormSubmit()" [formGroup]="coordinatesForm">
       <div class="mt-2">
         <label for="street" class="text-white me-4">Street:</label>
-        <input type="text" class="w-full p-2 border-2 rounded-sm" formControlName="street">
+        <input type="text" class="text-white w-full p-2 border-2 rounded-sm" formControlName="street">
       </div>
       <div class="mt-2">
         <label for="city" class="text-white me-4">City:</label>
-        <input type="text" class="w-full p-2 border-2 rounded-sm" formControlName="city">
+        <input type="text" class="text-white w-full p-2 border-2 rounded-sm" formControlName="city">
       </div>
       <div class="mt-2">
         <label for="postalCode" class="text-white me-4">PostalCode:</label>
-        <input type="text" class="w-full p-2 border-2 rounded-sm" formControlName="postalCode">
+        <input type="text" class="text-white w-full p-2 border-2 rounded-sm" formControlName="postalCode">
       </div>
       <div class="mt-2">
         <label for="country" class="text-white me-4">Country:</label>
-        <input type="text" class="w-full p-2 border-2 rounded-sm" formControlName="country">
+        <input type="text" class="text-white w-full p-2 border-2 rounded-sm" formControlName="country">
       </div>
       <div class="mt-2">
         <label for="isStart" class="flex items-center text-white">
