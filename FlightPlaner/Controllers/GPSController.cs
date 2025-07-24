@@ -33,7 +33,7 @@ namespace FlightPlaner.Controllers
 
         [HttpGet]
         [Route("GetMillerCoordinates")]
-        public IActionResult GetMillerCoordinates([FromQuery] int actualWidth, [FromQuery] int actualHeight)
+        public IActionResult GetMillerCoordinates([FromQuery] int actualWidth, [FromQuery] int actualHeight, [FromQuery] int imgWidth, [FromQuery] int imgHeight)
         {
             var coordinates = DbContext.Coordinates.ToList();
 
@@ -43,7 +43,7 @@ namespace FlightPlaner.Controllers
             }
 
             var millerCoordinates = coordinates
-                .Select(gps => GPSHelper.ToMiller(gps, actualWidth, actualHeight))
+                .Select(gps => GPSHelper.ToMercator(gps, actualWidth, actualHeight,imgWidth,imgHeight))
                 .ToList();
 
             return Ok(millerCoordinates);
@@ -70,7 +70,7 @@ namespace FlightPlaner.Controllers
 
         [HttpGet]
         [Route("GetOptimizedMillerCoordinates")]
-        public IActionResult GetOptimizedMillerCoordinates([FromQuery] int actualWidth, [FromQuery] int actualHeight,[FromQuery] Algorithm algorithm)
+        public IActionResult GetOptimizedMillerCoordinates([FromQuery] int actualWidth, [FromQuery] int actualHeight, [FromQuery] int imgWidth, [FromQuery] int imgHeight, [FromQuery] Algorithm algorithm)
         {
             var coordinates = DbContext.Coordinates.ToList();
 
@@ -85,7 +85,7 @@ namespace FlightPlaner.Controllers
             var optimizedCoordinates = optimizationService.Compute(startCoordinate, coordinates, algorithm);
 
             var millerCoordinates = coordinates
-             .Select(gps => GPSHelper.ToMiller(gps, actualWidth, actualHeight))
+             .Select(gps => GPSHelper.ToMercator(gps, actualWidth, actualHeight, imgWidth,imgHeight))
              .ToList();
 
             return Ok(millerCoordinates);

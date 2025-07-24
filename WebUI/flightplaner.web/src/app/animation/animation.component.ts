@@ -14,32 +14,32 @@ import { RouterModule } from '@angular/router';
   selector: 'app-animation',
   templateUrl: './animation.component.html',
   styleUrls: ['./animation.component.css'],
-  imports: [CommonModule,ReactiveFormsModule,RouterModule,HttpClientModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, HttpClientModule],
 })
 export class AnimationComponent implements AfterViewInit {
-
   private targetStates: { point: Point; state: TargetAnimationState }[] = [];
-  private millerCoordinates: Point[]=[];
+  private millerCoordinates: Point[] = [];
   private backgroundImageUrl = '../../assets/M1.jpg';
   private backgroundImageUrl2 = '../../assets/M2.jpg';
-  private toggleBackground:boolean=true;
+  private toggleBackground: boolean = true;
+  public showRoute: boolean = false;
+  public routeClickLabel: string = 'Route';
 
   http = inject(HttpClient);
 
   radius = 10;
-  offset = 2; // Adjust for growth speed
-  counter = 0;
+  offset = 2;
   private animationId: number | null = null;
   private offscreenCanvas: HTMLCanvasElement;
   private offscreenContext: CanvasRenderingContext2D | null;
-  public isAnimating: boolean = false; // Boolean to control animation state
+  public isAnimating: boolean = false;
   public imgWidth: number = 0;
   public imgHeight: number = 0;
 
   @ViewChild('canvas') myCanvas!: ElementRef;
+  background: HTMLImageElement = new Image();
 
   constructor() {
-    // Create an offscreen canvas for the background
     this.offscreenCanvas = document.createElement('canvas');
     this.offscreenContext = this.offscreenCanvas.getContext('2d');
   }
@@ -50,33 +50,26 @@ export class AnimationComponent implements AfterViewInit {
 
   public storeGuess(event: MouseEvent) {
     const canvas = this.myCanvas.nativeElement;
-    const x = event.offsetX; // Get x coordinate
-    const y = event.offsetY; // Get y coordinate
-
-    // Convert pixel coordinates to longitude
+    const x = event.offsetX;
+    const y = event.offsetY;
     const lon = (x / canvas.width) * 360 - 180;
-
-    // Convert pixel coordinates to latitude using the revised formula
-    const lat = 90 - (y / canvas.height) * 180; // Revised calculation
-
-    alert(`Canvas coords: x=${x}, y=${y} : Approx GPS: lat=${lat}, lon=${lon}  `);
+    const lat = 90 - (y / canvas.height) * 180;
+    alert(`Canvas coords: x=${x}, y=${y} : Approx GPS: lat=${lat}, lon=${lon}`);
   }
 
   processImage() {
     const canvas: HTMLCanvasElement = this.myCanvas.nativeElement;
     this.fitToContainer(canvas);
 
-    // Set the size of the offscreen canvas
     this.offscreenCanvas.width = canvas.width;
     this.offscreenCanvas.height = canvas.height;
 
-    const background = new Image();
-    background.src = this.toggleBackground? this.backgroundImageUrl: this.backgroundImageUrl2;
-    background.onload = () => {
+    this.background = new Image();
+    this.background.src = this.toggleBackground ? this.backgroundImageUrl : this.backgroundImageUrl2;
+
+    this.background.onload = () => {
       if (this.offscreenContext) {
-        // Draw the background onto the offscreen canvas
-        this.offscreenContext.drawImage(background, 0, 0, canvas.width, canvas.height);
-        // Draw the background immediately on the main canvas
+        this.offscreenContext.drawImage(this.background, 0, 0, canvas.width, canvas.height);
         const context = canvas.getContext('2d');
         if (context) {
           context.drawImage(this.offscreenCanvas, 0, 0);
@@ -84,11 +77,10 @@ export class AnimationComponent implements AfterViewInit {
           this.imgWidth = this.offscreenCanvas.width;
           this.imgHeight = this.offscreenCanvas.height;
 
-          // Fetch and draw the initial points (needles)
-          this.GetMillerCoordinates(canvas.width, canvas.height)
+          this.GetMillerCoordinates(canvas.width, canvas.height, this.background.width, this.background.height)
             .subscribe(points => {
-              this.millerCoordinates=points;
-              this.drawNeedles(this.millerCoordinates);   // Draw needles on the canvas
+              this.millerCoordinates = points;
+              this.drawNeedles(this.millerCoordinates);
             });
         }
       }
@@ -96,10 +88,8 @@ export class AnimationComponent implements AfterViewInit {
   }
 
   fitToContainer(canvas: HTMLCanvasElement) {
-    // Make it visually fill the positioned parent
     canvas.style.width = '100%';
     canvas.style.height = '100%';
-    // ...then set the internal size to match
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
   }
@@ -118,99 +108,140 @@ export class AnimationComponent implements AfterViewInit {
     }
 
     if (this.isAnimating) {
-      // SUBSCRIBE to get the coordinates
-      this.GetMillerCoordinates(actualWidth, actualHeight).subscribe(millerCoordinates => {
-        this.targetStates = millerCoordinates.map(point => ({
-          point,
-          state: { counter: 0, radius: 10 }
-        }));
+      this.GetMillerCoordinates(actualWidth, actualHeight, this.background.width, this.background.height)
+        .subscribe(millerCoordinates => {
+          this.targetStates = millerCoordinates.map(point => ({
+            point,
+            state: { counter: 0, radius: 10 }
+          }));
 
-        if (this.offscreenCanvas && context) {
-          context.clearRect(0, 0, canvas.width, canvas.height);
-          context.drawImage(this.offscreenCanvas, 0, 0);
-        }
+          if (this.offscreenCanvas && context) {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(this.offscreenCanvas, 0, 0);
+          }
 
-        this.animateAllTargets();
-      });
+          this.animateAllTargets();
+        });
     } else {
       this.stopAnimation();
     }
   }
 
- private animateAllTargets(): void {
-  const canvas = this.myCanvas.nativeElement;
-  const context = canvas.getContext('2d');
-  if (!context) return;
-
-  let lastRenderTime = 0;
-  const frameInterval = 150; // milliseconds between frames (controls pulse speed)
-
-  const animateFrame = (timestamp: number) => {
-    if (!this.isAnimating) return;
-
-    const elapsed = timestamp - lastRenderTime;
-    if (elapsed >= frameInterval) {
-      lastRenderTime = timestamp;
-
-      // Clear and redraw background
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      context.drawImage(this.offscreenCanvas, 0, 0);
-
-      // Draw pulsing circles
-      this.targetStates.forEach(({ point, state }) => {
-        context.beginPath();
-        context.arc(point.xPx, point.yPx, state.radius, 0, 2 * Math.PI);
-        context.strokeStyle = 'red';
-        context.stroke();
-
-        context.font = '12px Arial';
-        context.fillStyle =  this.toggleBackground ?'white' :'black';
-        context.textAlign = 'center';
-        context.fillText(point.city, point.xPx, point.yPx - state.radius - 5);
-
-        state.radius += this.offset;
-        state.counter++;
-
-        if (state.counter >= 10) {
-          state.radius = this.radius;
-          state.counter = 0;
-        }
-      });
-    }
-
-    this.animationId = requestAnimationFrame(animateFrame);
-  };
-
-  this.animationId = requestAnimationFrame(animateFrame);
-}
-
-
-public stopAnimation(): void {
-  this.isAnimating = false;
-  if (this.animationId) {
-    cancelAnimationFrame(this.animationId);
-    this.animationId = null;
-  }
-
-  this.targetStates = [];
-
-  // Defer drawing to the next frame, after any queued animation frame finishes
-  requestAnimationFrame(() => {
+  private animateAllTargets(): void {
     const canvas = this.myCanvas.nativeElement;
     const context = canvas.getContext('2d');
-    if (context) {
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      context.drawImage(this.offscreenCanvas, 0, 0);
-      this.drawNeedles(this.millerCoordinates); // safe to draw here
+    if (!context) return;
+
+    let lastRenderTime = 0;
+    const frameInterval = 150;
+
+    const animateFrame = (timestamp: number) => {
+      if (!this.isAnimating) return;
+
+      const elapsed = timestamp - lastRenderTime;
+      if (elapsed >= frameInterval) {
+        lastRenderTime = timestamp;
+
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(this.offscreenCanvas, 0, 0);
+
+        
+        if (this.showRoute) {
+          this.drawRoute(context, this.millerCoordinates);
+        }
+
+        this.targetStates.forEach(({ point, state }) => {
+          context.beginPath();
+          context.arc(point.xPx, point.yPx, state.radius, 0, 2 * Math.PI);
+          context.strokeStyle = 'red';
+          context.stroke();
+
+          context.font = '12px Arial';
+          context.fillStyle = this.toggleBackground ? 'white' : 'black';
+          context.textAlign = 'center';
+          context.fillText(point.city, point.xPx, point.yPx - state.radius - 5);
+
+          state.radius += this.offset;
+          state.counter++;
+
+          if (state.counter >= 10) {
+            state.radius = this.radius;
+            state.counter = 0;
+          }
+        });
+      }
+
+      this.animationId = requestAnimationFrame(animateFrame);
+    };
+
+    this.animationId = requestAnimationFrame(animateFrame);
+  }
+
+  public stopAnimation(): void {
+    this.isAnimating = false;
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = null;
     }
-  });
-}
 
-public toggleCard() : void {
-this.toggleBackground = !this.toggleBackground;
-this.processImage();
-}
+    this.targetStates = [];
 
+    requestAnimationFrame(() => {
+      const canvas = this.myCanvas.nativeElement;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(this.offscreenCanvas, 0, 0);
+
+        if (this.showRoute) {
+          this.drawRoute(context, this.millerCoordinates);
+        }
+
+        this.drawNeedles(this.millerCoordinates);
+      }
+    });
+  }
+
+  public toggleCard(): void {
+    this.toggleBackground = !this.toggleBackground;
+    this.processImage();
+  }
+
+  public Route(): void {
+    this.showRoute = !this.showRoute;
+    this.routeClickLabel = this.showRoute? 'Hide': 'Route';
+
+    if (!this.isAnimating) {
+      const canvas = this.myCanvas.nativeElement;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(this.offscreenCanvas, 0, 0);
+
+        if (this.showRoute) {
+          this.drawRoute(context, this.millerCoordinates);
+        }
+
+        this.drawNeedles(this.millerCoordinates);
+      }
+    }
+  }
+
+  private drawRoute(context: CanvasRenderingContext2D, points: Point[]): void {
+    if (!points || points.length < 2) return;
+
+    context.beginPath();
+    context.moveTo(points[0].xPx, points[0].yPx);
+    for (const point of points) {
+      context.lineTo(point.xPx, point.yPx);
+    }
+    context.strokeStyle = this.toggleBackground ? 'white' : 'black';
+    context.setLineDash([4, 3]);
+    context.lineWidth = 1;
+    context.stroke();
+
+    context.setLineDash([]);
+  }
 
   private drawNeedles(points: Point[]): void {
     const canvas = this.myCanvas.nativeElement;
@@ -218,8 +249,6 @@ this.processImage();
     if (!context) return;
 
     points.forEach(point => {
-
-      //needle
       context.beginPath();
       context.moveTo(point.xPx, point.yPx);
       context.lineTo(point.xPx - 4, point.yPx + 10);
@@ -228,16 +257,15 @@ this.processImage();
       context.fillStyle = 'red';
       context.fill();
 
-      //  city name 
       context.font = '12px Arial';
-      context.fillStyle =  this.toggleBackground ?'white' :'black';
+      context.fillStyle = this.toggleBackground ? 'white' : 'black';
       context.textAlign = 'center';
       context.fillText(point.city, point.xPx, point.yPx - 8);
     });
   }
 
-  private GetMillerCoordinates(actualWidth: number, actualHeight: number): Observable<Point[]> {
-    const url = `https://localhost:7182/api/GPS/GetMillerCoordinates?actualWidth=${actualWidth}&actualHeight=${actualHeight}`;
+  private GetMillerCoordinates(actualWidth: number, actualHeight: number, imgWidth: number, imgHeight: number): Observable<Point[]> {
+    const url = `https://localhost:7182/api/GPS/GetMillerCoordinates?actualWidth=${actualWidth}&actualHeight=${actualHeight}&imgWidth=${imgWidth}&imgHeight=${imgHeight}`;
     return this.http.get<Point[]>(url);
   }
 
