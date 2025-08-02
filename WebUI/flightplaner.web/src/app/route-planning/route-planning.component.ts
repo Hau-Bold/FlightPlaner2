@@ -2,10 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { FormGroup, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { GPS } from '../../Modules/gps.model';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
+import { Inject } from '@angular/core';
+import { CoordinatesService } from '../services/coordinates.service';
+import type { AppRoute } from '../../Modules/route.model';
 
 
 @Component({
@@ -16,22 +18,27 @@ import { HttpClientModule } from '@angular/common/http';
   imports: [CommonModule, ReactiveFormsModule, RouterModule,HttpClientModule],
 })
 export class RoutePlanningComponent {
-
-  private optimizedCoordinatesSubject = new BehaviorSubject<GPS[]>([]);
-  optimizedCoordinates$ = this.optimizedCoordinatesSubject.asObservable();
-
   coordinatesArray: GPS[] = [];
   isFullRoute = false;
   optimizedCoordinates: GPS[] = []; 
 
-  constructor(private router: Router) {
+
+  constructor(private router: Router, @Inject(CoordinatesService) private readonly coordinatesService: CoordinatesService) { 
+    
+    // Instead of using an Observable, fetch the coordinates once and store them in an array
+    this.coordinatesService.GetCoordinates().subscribe((route) => {
+      this.coordinatesArray = route.coordinates; 
+      this.isFullRoute=route.isFullRoute;
+    });
   }
+ 
   http = inject(HttpClient);
 
   coordinatesForm = new FormGroup(
     {
       street: new FormControl<string | null>(null),
       city: new FormControl<string>(''),
+
       postalCode: new FormControl<string | null>(null),
       country: new FormControl<string>(''),
       isStart: new FormControl<boolean>(false),
@@ -51,7 +58,11 @@ export class RoutePlanningComponent {
   this.http.post('https://localhost:7182/api/GPS', coordinateRequest).subscribe({
     next: (value) => {
       console.log(value);
-      this.coordinates$ = this.GetCoordinates(); // Refresh values
+      //refresh
+      this.coordinatesService.GetCoordinates().subscribe((route) => {
+      this.coordinatesArray = route.coordinates; 
+      this.isFullRoute=route.isFullRoute;
+    });
       this.coordinatesForm.reset();         
     },
     error: (err) => {
@@ -67,8 +78,6 @@ export class RoutePlanningComponent {
   });
 }
 
-  coordinates$ = this.GetCoordinates();
-
   public onDelete(id: string): void {
     this.http.delete(`https://localhost:7182/api/GPS/${id}`)
       .subscribe(
@@ -76,8 +85,12 @@ export class RoutePlanningComponent {
           next: (value) => {
             console.log(value);
             alert('item deleted');
-            this.coordinates$ = this.GetCoordinates();
-          }
+             //refresh
+      this.coordinatesService.GetCoordinates().subscribe((route) => {
+      this.coordinatesArray = route.coordinates; 
+      this.isFullRoute=route.isFullRoute;
+      });
+      }
         }
       );
   }
@@ -96,13 +109,8 @@ export class RoutePlanningComponent {
   }
 
   public applyOptimization(algorithm: string): void {
-    this.http.get<GPS[]>(`https://localhost:7182/api/GPS/GetOptimizedCoordinates`, { params: { algorithm } })
-      .subscribe({
-        next: (optimized) => {
-          this.optimizedCoordinatesSubject.next(optimized); // Update optimized coordinates
-        },
-        error: (err) => console.error('Optimization failed', err),
-      });
+   this.coordinatesService.applyOptimization(algorithm)
+   .subscribe(route=> this.optimizedCoordinates=route.coordinates);
   }
 
   public GetDisplayName(gps: GPS): string {
@@ -118,15 +126,6 @@ export class RoutePlanningComponent {
     }
 
     return displayName.toString();
-  }
-
-  private GetCoordinates(): Observable<GPS[]> {
-    return this.http.get<GPS[]>('https://localhost:7182/api/GPS').pipe(
-      tap(coords => {
-        this.coordinatesArray = coords;
-        this.isFullRoute = coords.some(c => c.isStart);
-      })
-    );
   }
 
  public GetPredecessor(index: number): GPS | null {
