@@ -125,49 +125,7 @@ namespace FlightPlaner.Services.Impl
             };
         }
 
-        internal static Point ToMercator(GPSDb gps, int actualWidth, int actualHeight, int imageWidth, int imageHeight)
-        {
-            // Map image size (fixed, based on your image)
-            //const double imageWidth = 2048.0;
-            //const double imageHeight = 1588.0;
-
-            // Convert input GPS coordinates
-            double lon = ToDouble(gps.Lon);
-            double lat = ToDouble(gps.Lat);
-
-            // Clamp latitude to prevent extreme distortion near poles
-            if (lat > 89.5) lat = 89.5;
-            if (lat < -89.5) lat = -89.5;
-
-            // Convert to radians
-            double latRad = ToRadians(lat);
-
-            // Mercator projection (x from -180 to +180, y from +85 to -85 approximately)
-            double xMercator = (lon + 180.0) / 360.0 * imageWidth;
-
-            double yMercator = imageHeight / 2.0 -
-                               (imageWidth / (2.0 * Math.PI)) *
-                               Math.Log(Math.Tan(Math.PI / 4.0 + latRad / 2.0));
-
-            // Scale from image space to canvas space
-            double scaleX = (double)actualWidth / imageWidth;
-            double scaleY = (double)actualHeight / imageHeight;
-
-            int xPx = (int)Math.Truncate(xMercator * scaleX);
-            int yPx = (int)Math.Truncate(yMercator * scaleY);
-
-            return new Point
-            {
-                X = xPx,
-                Y = yPx,
-                IsStart = gps.IsStart,
-                City = gps.City,
-            };
-        }
-
-
-
-        private static double ToRadians(double degrees) 
+       private static double ToRadians(double degrees) 
             => degrees * Math.PI / 180.0;
 
         private static double ToDouble(string input) 

@@ -30,25 +30,6 @@ namespace FlightPlaner.Controllers
             return Ok(coordinates);
         }
 
-
-        [HttpGet]
-        [Route("GetMillerCoordinates")]
-        public IActionResult GetMillerCoordinates([FromQuery] int actualWidth, [FromQuery] int actualHeight, [FromQuery] int imgWidth, [FromQuery] int imgHeight)
-        {
-            var coordinates = DbContext.Coordinates.ToList();
-
-            if (coordinates == null || coordinates.Count == 0)
-            {
-                return NotFound("No coordinates found.");
-            }
-
-            var millerCoordinates = coordinates
-                .Select(gps => GPSHelper.ToMercator(gps, actualWidth, actualHeight,imgWidth,imgHeight))
-                .ToList();
-
-            return Ok(millerCoordinates);
-        }
-
         [HttpGet]
         [Route("GetOptimizedCoordinates")]
         public IActionResult GetOptimizedCoordinates([FromQuery] Algorithm algorithm)
@@ -66,29 +47,6 @@ namespace FlightPlaner.Controllers
             var optimizedCoordinates =optimizationService.Compute(startCoordinate,coordinates,algorithm);
 
             return Ok(optimizedCoordinates);
-        }
-
-        [HttpGet]
-        [Route("GetOptimizedMillerCoordinates")]
-        public IActionResult GetOptimizedMillerCoordinates([FromQuery] int actualWidth, [FromQuery] int actualHeight, [FromQuery] int imgWidth, [FromQuery] int imgHeight, [FromQuery] Algorithm algorithm)
-        {
-            var coordinates = DbContext.Coordinates.ToList();
-
-            if (coordinates == null || coordinates.Count == 0)
-            {
-                return NotFound("No coordinates found.");
-            }
-
-            var startCoordinate = coordinates.Single(gps => gps.IsStart);
-            coordinates.Remove(startCoordinate);
-
-            var optimizedCoordinates = optimizationService.Compute(startCoordinate, coordinates, algorithm);
-
-            var millerCoordinates = coordinates
-             .Select(gps => GPSHelper.ToMercator(gps, actualWidth, actualHeight, imgWidth,imgHeight))
-             .ToList();
-
-            return Ok(millerCoordinates);
         }
 
         [HttpPost("")]

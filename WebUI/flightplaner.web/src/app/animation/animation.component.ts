@@ -1,13 +1,13 @@
-import { AfterViewInit, Component, ElementRef, inject, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, inject, ViewChild } from '@angular/core';
 import { TargetAnimationState } from '../../Modules/targetAnimationState.model';
 import { Point } from '../../Modules/point.model';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { GPS } from '../../Modules/gps.model';
+import { firstValueFrom } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
+import { CoordinatesService } from '../services/coordinates.service';
 
 @Component({
   standalone: true,
@@ -18,7 +18,7 @@ import { RouterModule } from '@angular/router';
 })
 export class AnimationComponent implements AfterViewInit {
   private targetStates: { point: Point; state: TargetAnimationState }[] = [];
-  private millerCoordinates: Point[] = [];
+  private mercatorCoordinates: Point[] = [];
   private backgroundImageUrl = '../../assets/M1.jpg';
   private backgroundImageUrl2 = '../../assets/M2.jpg';
   private toggleBackground: boolean = true;
@@ -39,7 +39,7 @@ export class AnimationComponent implements AfterViewInit {
   @ViewChild('canvas') myCanvas!: ElementRef;
   background: HTMLImageElement = new Image();
 
-  constructor() {
+  constructor( @Inject(CoordinatesService) private readonly coordinatesService: CoordinatesService) {
     this.offscreenCanvas = document.createElement('canvas');
     this.offscreenContext = this.offscreenCanvas.getContext('2d');
   }
@@ -77,10 +77,10 @@ export class AnimationComponent implements AfterViewInit {
           this.imgWidth = this.offscreenCanvas.width;
           this.imgHeight = this.offscreenCanvas.height;
 
-          this.GetMillerCoordinates(canvas.width, canvas.height, this.background.width, this.background.height)
+this.coordinatesService.GetMercatorCoordinates(canvas.width, canvas.height, this.background.width, this.background.height)
             .subscribe(points => {
-              this.millerCoordinates = points;
-              this.drawNeedles(this.millerCoordinates);
+              this.mercatorCoordinates = points;
+              this.drawNeedles(this.mercatorCoordinates);
             });
         }
       }
@@ -108,7 +108,8 @@ export class AnimationComponent implements AfterViewInit {
     }
 
     if (this.isAnimating) {
-      this.GetMillerCoordinates(actualWidth, actualHeight, this.background.width, this.background.height)
+
+      this.coordinatesService.GetMercatorCoordinates(actualWidth, actualHeight, this.background.width, this.background.height)
         .subscribe(millerCoordinates => {
           this.targetStates = millerCoordinates.map(point => ({
             point,
@@ -122,60 +123,76 @@ export class AnimationComponent implements AfterViewInit {
 
           this.animateAllTargets();
         });
+
+
+        
     } else {
       this.stopAnimation();
     }
   }
 
-  private animateAllTargets(): void {
-    const canvas = this.myCanvas.nativeElement;
-    const context = canvas.getContext('2d');
-    if (!context) return;
+private async animateAllTargets(): Promise<void> {
+  const canvas = this.myCanvas.nativeElement;
+  const context = canvas.getContext('2d');
+  if (!context) return;
 
-    let lastRenderTime = 0;
-    const frameInterval = 150;
+  // Wait for the projected route points ONCE before animation starts
+  const routePoints = this.showRoute
+    ? await firstValueFrom(
+        this.coordinatesService.GetMercatorCoordinates(
+          canvas.width,
+          canvas.height,
+          this.background.width,
+          this.background.height
+        )
+      )
+    : [];
 
-    const animateFrame = (timestamp: number) => {
-      if (!this.isAnimating) return;
+  let lastRenderTime = 0;
+  const frameInterval = 150;
 
-      const elapsed = timestamp - lastRenderTime;
-      if (elapsed >= frameInterval) {
-        lastRenderTime = timestamp;
+  const animateFrame = (timestamp: number) => {
+    if (!this.isAnimating) return;
 
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(this.offscreenCanvas, 0, 0);
+    const elapsed = timestamp - lastRenderTime;
+    if (elapsed >= frameInterval) {
+      lastRenderTime = timestamp;
 
-        
-        if (this.showRoute) {
-          this.drawRoute(context, this.millerCoordinates);
-        }
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(this.offscreenCanvas, 0, 0);
 
-        this.targetStates.forEach(({ point, state }) => {
-          context.beginPath();
-          context.arc(point.xPx, point.yPx, state.radius, 0, 2 * Math.PI);
-          context.strokeStyle = 'red';
-          context.stroke();
-
-          context.font = '12px Arial';
-          context.fillStyle = this.toggleBackground ? 'white' : 'black';
-          context.textAlign = 'center';
-          context.fillText(point.city, point.xPx, point.yPx - state.radius - 5);
-
-          state.radius += this.offset;
-          state.counter++;
-
-          if (state.counter >= 10) {
-            state.radius = this.radius;
-            state.counter = 0;
-          }
-        });
+      // Draw route once points are available
+      if (this.showRoute && routePoints.length > 1) {
+        this.drawRoute(context, routePoints);
       }
 
-      this.animationId = requestAnimationFrame(animateFrame);
-    };
+      this.targetStates.forEach(({ point, state }) => {
+        context.beginPath();
+        context.arc(point.xPx, point.yPx, state.radius, 0, 2 * Math.PI);
+        context.strokeStyle = 'red';
+        context.stroke();
+
+        context.font = '12px Arial';
+        context.fillStyle = this.toggleBackground ? 'white' : 'black';
+        context.textAlign = 'center';
+        context.fillText(point.city, point.xPx, point.yPx - state.radius - 5);
+
+        state.radius += this.offset;
+        state.counter++;
+
+        if (state.counter >= 10) {
+          state.radius = this.radius;
+          state.counter = 0;
+        }
+      });
+    }
 
     this.animationId = requestAnimationFrame(animateFrame);
-  }
+  };
+
+  this.animationId = requestAnimationFrame(animateFrame);
+}
+
 
   public stopAnimation(): void {
     this.isAnimating = false;
@@ -194,10 +211,10 @@ export class AnimationComponent implements AfterViewInit {
         context.drawImage(this.offscreenCanvas, 0, 0);
 
         if (this.showRoute) {
-          this.drawRoute(context, this.millerCoordinates);
+          this.drawRoute(context, this.mercatorCoordinates);
         }
 
-        this.drawNeedles(this.millerCoordinates);
+        this.drawNeedles(this.mercatorCoordinates);
       }
     });
   }
@@ -219,10 +236,10 @@ export class AnimationComponent implements AfterViewInit {
         context.drawImage(this.offscreenCanvas, 0, 0);
 
         if (this.showRoute) {
-          this.drawRoute(context, this.millerCoordinates);
+          this.drawRoute(context, this.mercatorCoordinates);
         }
 
-        this.drawNeedles(this.millerCoordinates);
+        this.drawNeedles(this.mercatorCoordinates);
       }
     }
   }
@@ -262,14 +279,5 @@ export class AnimationComponent implements AfterViewInit {
       context.textAlign = 'center';
       context.fillText(point.city, point.xPx, point.yPx - 8);
     });
-  }
-
-  private GetMillerCoordinates(actualWidth: number, actualHeight: number, imgWidth: number, imgHeight: number): Observable<Point[]> {
-    const url = `https://localhost:7182/api/GPS/GetMillerCoordinates?actualWidth=${actualWidth}&actualHeight=${actualHeight}&imgWidth=${imgWidth}&imgHeight=${imgHeight}`;
-    return this.http.get<Point[]>(url);
-  }
-
-  private GetCoordinates(): Observable<GPS[]> {
-    return this.http.get<GPS[]>('https://localhost:7182/api/GPS');
   }
 }

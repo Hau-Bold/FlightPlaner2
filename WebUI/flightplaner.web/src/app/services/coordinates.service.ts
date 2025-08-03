@@ -1,8 +1,9 @@
 import { inject, Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { map, Observable, of, switchMap } from 'rxjs';
 import { GPS } from '../../Modules/gps.model';
 import { HttpClient } from '@angular/common/http';
 import { AppRoute } from '../../Modules/route.model';
+import { Point } from '../../Modules/point.model';
 
 @Injectable({
   providedIn: 'root'
@@ -10,30 +11,76 @@ import { AppRoute } from '../../Modules/route.model';
 export class CoordinatesService {
 
   private http = inject(HttpClient);
+  private optimizedCoordinates: GPS[] | null = null;
 
-  constructor() { }
+  constructor() {}
 
   public GetCoordinates(): Observable<AppRoute> {
+    return this.http.get<GPS[]>('https://localhost:7182/api/GPS').pipe(
+      map(coords => ({
+        coordinates: coords,
+        isFullRoute: coords.some(c => c.isStart)
+      }))
+    );
+  }
 
-      return this.http.get<GPS[]>('https://localhost:7182/api/GPS').pipe(
-        map(coords => {
-          const isFullRoute = coords.some(c => c.isStart);
+  public applyOptimization(algorithm: string): Observable<AppRoute> {
+    return this.http.get<GPS[]>(`https://localhost:7182/api/GPS/GetOptimizedCoordinates`, { params: { algorithm } }).pipe(
+      map(optimized => {
+        this.optimizedCoordinates = optimized;
+        return {
+          coordinates: optimized
+        } as AppRoute;
+      })
+    );
+  }
 
-          return { 
-            coordinates: coords,
-            isFullRoute: isFullRoute 
-          } as AppRoute;
-        })
-      );
-    }
+  public GetMercatorCoordinates(
+    actualWidth: number,
+    actualHeight: number,
+    imageWidth: number,
+    imageHeight: number
+  ): Observable<Point[]> {
+    const data$: Observable<GPS[]> =
+      this.optimizedCoordinates
+        ? of(this.optimizedCoordinates)
+        : this.http.get<GPS[]>('https://localhost:7182/api/GPS');
 
-    public applyOptimization(algorithm: string): Observable<AppRoute> {
+    return data$.pipe(
+      map(coords =>
+        coords.map(c =>
+          this.ToMercator(c, actualWidth, actualHeight, imageWidth, imageHeight)
+        )
+      )
+    );
+  }
 
-    return this.http.get<GPS[]>(`https://localhost:7182/api/GPS/GetOptimizedCoordinates`, { params: { algorithm } })
-    .pipe(map(optimized => {
-       return { 
-            coordinates: optimized, 
-          } as AppRoute;
-    }))
+  private ToMercator(
+    gps: GPS,
+    actualWidth: number,
+    actualHeight: number,
+    imageWidth: number,
+    imageHeight: number
+  ): Point {
+    const lon: number = Number(gps.lon);
+    let lat: number = Number(gps.lat);
+
+    lat = Math.max(-89.5, Math.min(89.5, lat)); // Clamp lat
+
+    const latRad = lat * Math.PI / 180;
+    const xMercator = (lon + 180.0) / 360.0 * imageWidth;
+    const yMercator =
+      imageHeight / 2.0 -
+      (imageWidth / (2.0 * Math.PI)) * Math.log(Math.tan(Math.PI / 4.0 + latRad / 2.0));
+
+    const xPx = Math.trunc(xMercator * (actualWidth / imageWidth));
+    const yPx = Math.trunc(yMercator * (actualHeight / imageHeight));
+
+    return {
+      xPx,
+      yPx,
+      isStart: gps.isStart,
+      city: gps.city
+    };
   }
 }

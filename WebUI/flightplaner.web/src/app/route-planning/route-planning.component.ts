@@ -7,8 +7,6 @@ import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { Inject } from '@angular/core';
 import { CoordinatesService } from '../services/coordinates.service';
-import type { AppRoute } from '../../Modules/route.model';
-
 
 @Component({
   standalone: true,
@@ -25,7 +23,6 @@ export class RoutePlanningComponent {
 
   constructor(private router: Router, @Inject(CoordinatesService) private readonly coordinatesService: CoordinatesService) { 
     
-    // Instead of using an Observable, fetch the coordinates once and store them in an array
     this.coordinatesService.GetCoordinates().subscribe((route) => {
       this.coordinatesArray = route.coordinates; 
       this.isFullRoute=route.isFullRoute;
