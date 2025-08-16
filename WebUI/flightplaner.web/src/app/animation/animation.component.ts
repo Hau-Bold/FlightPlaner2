@@ -216,22 +216,22 @@ const dy = target.yPx - this.currentPlaneLocation.yPx;
  
 const distance = Math.sqrt(dx * dx + dy * dy);
 
-if(distance < 2) {
+if(distance < 1) {
   return false; 
 }
 
 // calc new position:
 
 if (dx > 0) {
-  this.currentPlaneLocation.xPx += 2;
+  this.currentPlaneLocation.xPx += 1;
 } else if (dx < 0) {
-  this.currentPlaneLocation.xPx -= 2;
+  this.currentPlaneLocation.xPx -= 1;
 }
 
 if (dy > 0) {
-  this.currentPlaneLocation.yPx += 2;
+  this.currentPlaneLocation.yPx += 1;
 } else if (dy < 0) {
-  this.currentPlaneLocation.yPx -= 2;
+  this.currentPlaneLocation.yPx -= 1;
 }
 
 const angle =this.getAngleBetweenPoints(this.currentPlaneLocation,target);
