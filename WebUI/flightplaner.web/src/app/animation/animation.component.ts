@@ -1,11 +1,9 @@
 import { AfterViewInit, Component, ElementRef, Inject, inject, ViewChild } from '@angular/core';
 import { TargetAnimationState } from '../../Modules/targetAnimationState.model';
 import { Point } from '../../Modules/point.model';
-import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { CoordinatesService } from '../services/coordinates.service';
 
@@ -14,7 +12,7 @@ import { CoordinatesService } from '../services/coordinates.service';
   selector: 'app-animation',
   templateUrl: './animation.component.html',
   styleUrls: ['./animation.component.css'],
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, HttpClientModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
 })
 export class AnimationComponent implements AfterViewInit {
   private targetStates: { point: Point; state: TargetAnimationState }[] = [];
@@ -48,23 +46,11 @@ export class AnimationComponent implements AfterViewInit {
     this.offscreenContext = this.offscreenCanvas.getContext('2d');
     this.plane = new Image();
     this.plane .src = this.planeImagePath;
-    this.plane.onload = () => {
-    console.log('Plane image loaded');
-  };
   }
 
   ngAfterViewInit(): void {
     this.processImage();
    
-  }
-
-  public storeGuess(event: MouseEvent) {
-    const canvas = this.myCanvas.nativeElement;
-    const x = event.offsetX;
-    const y = event.offsetY;
-    const lon = (x / canvas.width) * 360 - 180;
-    const lat = 90 - (y / canvas.height) * 180;
-    alert(`Canvas coords: x=${x}, y=${y} : Approx GPS: lat=${lat}, lon=${lon}`);
   }
 
   processImage() {
@@ -150,8 +136,6 @@ private async startAnimationLoop(): Promise<void> {
     return;
   }
 
-
-
   const canvas = this.myCanvas.nativeElement;
   const context = canvas.getContext('2d');
   if (!context) return;
@@ -232,22 +216,22 @@ const dy = target.yPx - this.currentPlaneLocation.yPx;
  
 const distance = Math.sqrt(dx * dx + dy * dy);
 
-if(distance < 1) {
+if(distance < 2) {
   return false; 
 }
 
 // calc new position:
 
 if (dx > 0) {
-  this.currentPlaneLocation.xPx += 1;
+  this.currentPlaneLocation.xPx += 2;
 } else if (dx < 0) {
-  this.currentPlaneLocation.xPx -= 1;
+  this.currentPlaneLocation.xPx -= 2;
 }
 
 if (dy > 0) {
-  this.currentPlaneLocation.yPx += 1;
+  this.currentPlaneLocation.yPx += 2;
 } else if (dy < 0) {
-  this.currentPlaneLocation.yPx -= 1;
+  this.currentPlaneLocation.yPx -= 2;
 }
 
 const angle =this.getAngleBetweenPoints(this.currentPlaneLocation,target);

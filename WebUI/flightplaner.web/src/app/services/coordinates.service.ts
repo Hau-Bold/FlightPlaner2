@@ -1,9 +1,10 @@
 import { inject, Injectable } from '@angular/core';
-import { map, Observable, of, switchMap } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 import { GPS } from '../../Modules/gps.model';
 import { HttpClient } from '@angular/common/http';
 import { AppRoute } from '../../Modules/route.model';
 import { Point } from '../../Modules/point.model';
+import { CoordinateRequest } from '../../Modules/coordinateRequest.model';
 
 @Injectable({
   providedIn: 'root'
@@ -35,7 +36,17 @@ export class CoordinatesService {
     );
   }
 
-  public GetMercatorCoordinates(
+public Delete(id:string):Observable<Object>
+{
+    return this.http.delete(`https://localhost:7182/api/GPS/${id}`)
+}
+
+public Post(coordinateRequest:CoordinateRequest):Observable<Object>
+{
+  return this.http.post('https://localhost:7182/api/GPS', coordinateRequest)
+}
+
+public GetMercatorCoordinates(
     actualWidth: number,
     actualHeight: number,
     imageWidth: number,

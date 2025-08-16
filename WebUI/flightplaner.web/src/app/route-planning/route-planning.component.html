@@ -84,7 +84,7 @@
         </div>
 
         <!-- Distance to Predecessor (if applicable) -->
-        <div *ngIf="GetPredecessor(i) as predecessor" class="text-white text-sm mt-2">
+        <div *ngIf="GetPredecessor(i,coordinatesArray) as predecessor" class="text-white text-sm mt-2">
         <span>Distance to Predecessor: {{ GetDistanceBetween(item, predecessor) }} km</span>
         </div>
 
@@ -113,6 +113,11 @@
         </div>
       </li>
       </ul>
+
+      <!-- Total Distance -->
+      <div class="bg-teal-900 p-4 rounded-lg shadow-md opacity-80 border-2 border-teal-500 text-white font-light text-xl">
+      <span>Total: {{ TotalDistance(coordinatesArray) }} km</span>
+      </div>
 
       <!-- Optimization Menu (appears only if coordinates exist) -->
       <div *ngIf="isFullRoute" class="mt-4">
@@ -150,7 +155,7 @@
             </div>
 
             <!-- Distance to Predecessor (if applicable) -->
-            <div *ngIf="GetPredecessor(i) as predecessor" class="text-white text-sm mt-2">
+            <div *ngIf="GetPredecessor(i,optimizedCoordinates) as predecessor" class="text-white text-sm mt-2">
               <span>Distance to Predecessor: {{ GetDistanceBetween(item, predecessor) }} km</span>
             </div>
             
@@ -158,6 +163,10 @@
         </ul>
       </div>
     </div>
+      <!-- Total Distance -->
+      <div class="bg-teal-900 p-4 rounded-lg shadow-md opacity-80 border-2 border-teal-500 text-white font-light text-xl">
+      <span>Total: {{ TotalDistance(optimizedCoordinates) }} km</span>
+      </div>
   </div>
 
 
