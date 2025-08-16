@@ -104,7 +104,6 @@ namespace FlightPlaner.Controllers
             return Ok(result);
         }
 
-
         [HttpPost]
         [Route("{id:guid}")]
         public async Task<IActionResult> Update(GPSRequestDTO dto)
